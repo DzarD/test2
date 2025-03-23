@@ -1,16 +1,4 @@
-# FocusFlow
-FocusFlow is a productivity app that helps users stay focused and manage their time with the Pomodoro technique. Users can customize sessions, organize tasks with tags, and track progress through detailed statistics. With features like dark mode and personalized settings, FocusFlow keeps you organized and on track.
 
-## Group S 1 G 8
-- Iryna Nikitsenka
-- Olivia Howard
-- Howard Barde
-- Ignacio Alvarez
-
-## Data Source
-The application relies on single-user input. All data is sourced directly from the user and remains securely stored on the user's device, ensuring privacy and local-only data handling.
-
-## Features
 ### Session Management
 1. Users can start and end a flow session.
 2. Users can customize session duration in the app settings.
