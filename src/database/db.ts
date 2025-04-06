@@ -60,6 +60,15 @@ export const initDatabase = () => {
         FOREIGN KEY(tag_id) REFERENCES tags(id)
       );`
     );
+
+    // Preferences table for storing
+    db.execSync(
+      `CREATE TABLE IF NOT EXISTS preferences (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        pref_key TEXT UNIQUE,
+        pref_value TEXT
+      );`
+    );
   } catch (error) {
     console.error("Error creating tables:", error);
   }
@@ -340,13 +349,11 @@ export const getTaskStatistics = (taskId: number) => {
       totalBreakTime,
       flowSessions,
     };
-
   } catch (error) {
     console.error("Error fetching task statistics:", error);
     return null;
   }
 };
-
 
 // Function to insert a tag into tag table
 export const insertTag = async (tagName: string): Promise<void> => {
@@ -421,20 +428,18 @@ export const updateTask = (
   }
 };
 // Function to update tags in flow sessions
-export const updateTags = (
-  id: number,
-  tagId: number | null
-): void => {
+export const updateTags = (id: number, tagId: number | null): void => {
   try {
-    db.runSync(
-      "UPDATE flow_sessions SET tag_id = ? WHERE task_id = ?;",
-      [tagId, id]
-    );
+    db.runSync("UPDATE flow_sessions SET tag_id = ? WHERE task_id = ?;", [
+      tagId,
+      id,
+    ]);
     console.log("Tags updated successfully");
   } catch (error) {
     console.error("Error updating tags:", error);
   }
-}
+};
+
 //Function to delete a task
 export const deleteTask = (id: number): void => {
   try {
@@ -452,6 +457,81 @@ export const deleteCompletedTasks = (): void => {
     console.log("Completed tasks deleted successfully");
   } catch (error) {
     console.error("Error deleting completed tasks:", error);
+  }
+};
+
+export const getUserPreference = (key: string): string | null => {
+  try {
+    const result = db.getAllSync(
+      "SELECT pref_value FROM preferences WHERE pref_key = ?;",
+      [key]
+    ) as Array<{ pref_value: string }>;
+
+    if (result.length > 0) {
+      return result[0].pref_value;
+    }
+    return null;
+  } catch (error) {
+    console.error("Error getting user preference:", error);
+    return null;
+  }
+};
+
+// Set or update a user preference
+export const setUserPreference = (key: string, value: string): void => {
+  try {
+    const existing = db.getAllSync(
+      "SELECT id FROM preferences WHERE pref_key = ?;",
+      [key]
+    ) as Array<{ id: number }>;
+
+    if (existing.length > 0) {
+      db.runSync("UPDATE preferences SET pref_value = ? WHERE pref_key = ?;", [
+        value,
+        key,
+      ]);
+      console.log(`Preference '${key}' updated to '${value}'`);
+    } else {
+      db.runSync(
+        "INSERT INTO preferences (pref_key, pref_value) VALUES (?, ?);",
+        [key, value]
+      );
+      console.log(`Preference '${key}' inserted with value '${value}'`);
+    }
+  } catch (error) {
+    console.error("Error setting user preference:", error);
+  }
+};
+
+// Function to delete all user data
+export const deleteAllUserData = async () => {
+  try {
+    // Delete all record from the flow_sessions, sessions, tasks, and tags tables
+    await db.runAsync("DELETE FROM flow_sessions;");
+    await db.runAsync("DELETE FROM sessions;");
+    await db.runAsync("DELETE FROM tasks;");
+    await db.runAsync("DELETE FROM tags;");
+
+    console.log("All user data deleted successfully.");
+    
+  } catch (error) {
+    console.error("Error deleing all user data:", error);
+  }
+};
+
+// Function to check if a task exists in the db
+export const checkTaskExists = (taskId: number): boolean => {
+  try {
+    const result = db.getAllSync(
+      "SELECT 1 FROM tasks WHERE id = ? LIMIT 1;", 
+      [taskId]
+    );
+    
+    // If the result has any rows, the task exists
+    return result.length > 0;
+  } catch (error) {
+    console.error("Error checking task existence:", error);
+    return false;
   }
 };
 

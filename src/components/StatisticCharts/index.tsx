@@ -14,6 +14,7 @@ import {
 import CustomButton from "../CustomButton";
 import { DefaultModeColors, DarkModeColors } from "../../constants";
 import { LineChart, PieChart } from "react-native-chart-kit";
+import { useTranslation } from "react-i18next";
 
 const StatisticCharts = () => {
   const [loading, setLoading] = useState(true);
@@ -41,6 +42,7 @@ const StatisticCharts = () => {
     }[]
   >([]);
 
+  const { t } = useTranslation();
 
   useEffect(() => {
     setInterval();
@@ -244,7 +246,6 @@ const StatisticCharts = () => {
     setPieChartData(pieData);
   };
 
-
   const getRandomColor = (index: number) => {
     const colors = [
       "#9B59B6",
@@ -275,7 +276,7 @@ const StatisticCharts = () => {
     <View style={styles.container}>
       <View style={styles.buttonContainer}>
         <CustomButton
-          title="Today"
+          title={t("today")}
           viewStyle={[
             styles.button,
             {
@@ -290,7 +291,7 @@ const StatisticCharts = () => {
           onPress={() => setMode("day")}
         />
         <CustomButton
-          title="Week"
+          title={t("week")}
           viewStyle={[
             styles.button,
             {
@@ -309,7 +310,7 @@ const StatisticCharts = () => {
         <ActivityIndicator size="large" color={DefaultModeColors.border} />
       ) : lineChartData.focusData.length === 0 || pieChartData.length === 0 ? (
         <Text style={[styles.noDataText, { color: DefaultModeColors.text }]}>
-          No data available
+          {t("noDataAvailable")}
         </Text>
       ) : (
         <>
@@ -329,11 +330,11 @@ const StatisticCharts = () => {
                     strokeWidth: 2,
                   },
                 ],
-                legend: ["Focus Time", "Break Time"],
+                legend: [t("legendFocusTime"), t("legendBreakTime")],
               }}
               width={mode === "day" ? 600 : Dimensions.get("window").width - 40}
               height={250}
-              yAxisSuffix="min"
+              yAxisSuffix={t("minutesSuffix")}
               chartConfig={{
                 backgroundGradientFrom: DefaultModeColors.background,
                 backgroundGradientTo: DefaultModeColors.background,
@@ -360,7 +361,7 @@ const StatisticCharts = () => {
             accessor="population"
             backgroundColor={DefaultModeColors.background}
             paddingLeft="15"
-          />  
+          />
         </>
       )}
     </View>

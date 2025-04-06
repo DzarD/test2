@@ -20,8 +20,7 @@ export default StyleSheet.create({
       },
       sessionItem: {
         padding: 10,
-        borderBottomWidth: 1,
-        borderBottomColor: "#ccc",
+        borderBottomWidth: 2,
       },
       noDataText: {
         fontSize: 16,

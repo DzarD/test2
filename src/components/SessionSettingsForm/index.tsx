@@ -9,10 +9,13 @@ import { useFocusEffect } from "@react-navigation/native";
 import { useSessionSettingsContext } from "../../context/SessionSettingsContext";
 import CustomButton from "../CustomButton";
 import CustomSlider from "../CustomSlider";
+import { useTranslation } from "react-i18next";
 
 const SessionSettingsForm = () => {
   const { settings, loading, updateSettings } = useSessionSettingsContext();
   const [localSettings, setLocalSettings] = useState(settings);
+
+  const { t } = useTranslation();
 
   // Update local tempSettings whenever settings are changed in the sliders
   const handleSliderChange = (key: string, value: number) => {
@@ -54,7 +57,7 @@ const SessionSettingsForm = () => {
   return (
     <View style={styles.container}>
       <CustomSlider
-        label={`Focus Time: ${localSettings.focus_time} minutes`}
+        label={t("focusTime", { minutes: localSettings.focus_time })}
         value={localSettings.focus_time}
         minimumValue={SESSION_SETTINGS_RANGES.focus_time.min}
         maximumValue={SESSION_SETTINGS_RANGES.focus_time.max}
@@ -62,7 +65,7 @@ const SessionSettingsForm = () => {
         onValueChange={(value) => handleSliderChange("focus_time", value)}
       />
       <CustomSlider
-        label={`Short Break: ${localSettings.short_break} minutes`}
+        label={t("shortBreak", { minutes: localSettings.short_break })}
         value={localSettings.short_break}
         minimumValue={SESSION_SETTINGS_RANGES.short_break.min}
         maximumValue={SESSION_SETTINGS_RANGES.short_break.max}
@@ -70,7 +73,7 @@ const SessionSettingsForm = () => {
         onValueChange={(value) => handleSliderChange("short_break", value)}
       />
       <CustomSlider
-        label={`Long Break: ${localSettings.long_break} minutes`}
+        label={t("longBreak", { minutes: localSettings.long_break })}
         value={localSettings.long_break}
         minimumValue={SESSION_SETTINGS_RANGES.long_break.min}
         maximumValue={SESSION_SETTINGS_RANGES.long_break.max}
@@ -78,7 +81,7 @@ const SessionSettingsForm = () => {
         onValueChange={(value) => handleSliderChange("long_break", value)}
       />
       <CustomSlider
-        label={`Sections: ${localSettings.sections}`}
+        label={t("sections", { count: localSettings.sections })}
         value={localSettings.sections}
         minimumValue={SESSION_SETTINGS_RANGES.sections.min}
         maximumValue={SESSION_SETTINGS_RANGES.sections.max}
@@ -87,8 +90,8 @@ const SessionSettingsForm = () => {
       />
 
       <View style={styles.buttonContainer}>
-        <CustomButton title="Save Settings" onPress={handleUpdateSettings} />
-        <CustomButton title="Reset to Default" onPress={handleResetToDefault} />
+        <CustomButton title={t("save")} onPress={handleUpdateSettings} />
+        <CustomButton title={t("reset")} onPress={handleResetToDefault} />
       </View>
     </View>
   );

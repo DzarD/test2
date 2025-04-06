@@ -6,8 +6,13 @@ import { Dimensions } from "react-native";
 import { RouteProp, useRoute } from "@react-navigation/native";
 import { FlowSessionTask } from "../../constants/types";
 import styles from "./styles";
+import { DefaultModeColors, DarkModeColors } from "../../constants";
+import { useTranslation } from "react-i18next";
 
-type TaskStatisticsRouteProp = RouteProp<{ params: { taskId: number } }, "params">;
+type TaskStatisticsRouteProp = RouteProp<
+  { params: { taskId: number } },
+  "params"
+>;
 
 const TaskStatisticsScreen = () => {
   const route = useRoute<TaskStatisticsRouteProp>();
@@ -18,15 +23,15 @@ const TaskStatisticsScreen = () => {
     {
       name: "",
       time: 0,
-      color: "green",
-      legendFontColor: "#7F7F7F",
+      color: "#27AE60",
+      legendFontColor: DefaultModeColors.text,
       legendFontSize: 14,
     },
     {
       name: "",
       time: 0,
-      color: "red",
-      legendFontColor: "#7F7F7F",
+      color: "#E74C3C",
+      legendFontColor: DefaultModeColors.text,
       legendFontSize: 14,
     },
   ]);
@@ -34,6 +39,8 @@ const TaskStatisticsScreen = () => {
   const [flowSessions, setFlowSessions] = useState<FlowSessionTask[]>([]);
   const [taskName, setTaskName] = useState("Task");
   const [hasData, setHasData] = useState(true);
+
+  const { t } = useTranslation();
 
   useEffect(() => {
     // Get task information to use in statistics display
@@ -47,24 +54,28 @@ const TaskStatisticsScreen = () => {
 
         // Convert total focus time in minutes to percentage
         const focusPercent =
-          totalTimeMinutes > 0 ? Math.round((focusTimeMinutes / totalTimeMinutes) * 100) : 0;
-        // Convert total break time in minutes to percentage  
+          totalTimeMinutes > 0
+            ? Math.round((focusTimeMinutes / totalTimeMinutes) * 100)
+            : 0;
+        // Convert total break time in minutes to percentage
         const breakPercent =
-          totalTimeMinutes > 0 ? Math.round((breakTimeMinutes / totalTimeMinutes) * 100) : 0;
+          totalTimeMinutes > 0
+            ? Math.round((breakTimeMinutes / totalTimeMinutes) * 100)
+            : 0;
 
         setPieData([
           {
-            name: `% Focus Time`,
+            name: t("percentFocusTime"),
             time: focusPercent,
-            color: "green",
-            legendFontColor: "#7F7F7F",
+            color: "#27AE60",
+            legendFontColor: DefaultModeColors.text,
             legendFontSize: 14,
           },
           {
-            name: `% Break Time`,
+            name: t("percentBreakTime"),
             time: breakPercent,
-            color: "red",
-            legendFontColor: "#7F7F7F",
+            color: "#E74C3C",
+            legendFontColor: DefaultModeColors.text,
             legendFontSize: 14,
           },
         ]);
@@ -90,7 +101,9 @@ const TaskStatisticsScreen = () => {
     <View style={styles.container}>
       {hasData ? (
         <>
-          <Text style={styles.header}>{taskName} Statistics</Text>
+          <Text style={[styles.header, { color: DefaultModeColors.text }]}>
+            {t("taskStatisticsHeader", { taskName })}
+          </Text>
           <PieChart
             data={pieData.map((item) => ({
               name: item.name,
@@ -102,9 +115,9 @@ const TaskStatisticsScreen = () => {
             width={Dimensions.get("window").width - 40}
             height={220}
             chartConfig={{
-              backgroundColor: "#ffffff",
-              backgroundGradientFrom: "#ffffff",
-              backgroundGradientTo: "#ffffff",
+              backgroundColor: DefaultModeColors.background,
+              backgroundGradientFrom: DefaultModeColors.background,
+              backgroundGradientTo: DefaultModeColors.background,
               decimalPlaces: 0,
               color: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
             }}
@@ -113,15 +126,23 @@ const TaskStatisticsScreen = () => {
             paddingLeft="5"
             absolute
           />
-          <Text style={styles.totalTime}>Total Time Spent: {totalTime} min</Text>
+          <Text style={[styles.totalTime, { color: DefaultModeColors.text }]}>
+            {t("totalTimeSpent", { totalTime })}
+          </Text>
 
-          <Text style={styles.sessionHeader}>Flow Sessions:</Text>
+          <Text
+            style={[styles.sessionHeader, { color: DefaultModeColors.text }]}
+          >
+            {t("flowSessions")}:
+          </Text>
           <FlatList
             data={flowSessions}
             keyExtractor={(item) => item.flowSessionId.toString()}
             renderItem={({ item }) => {
               const sessionStart = new Date(item.date);
-              const sessionEnd = new Date(sessionStart.getTime() + item.duration * 60 * 1000);
+              const sessionEnd = new Date(
+                sessionStart.getTime() + item.duration * 60 * 1000
+              );
 
               const startDate = sessionStart.toLocaleDateString();
               const startTime = sessionStart.toLocaleTimeString([], {
@@ -135,23 +156,39 @@ const TaskStatisticsScreen = () => {
               });
 
               return (
-                <View style={styles.sessionItem}>
-                  <Text>Start Date: {startDate}</Text>
-                  <Text>Start Time: {startTime}</Text>
-                  <Text>End Date: {endDate}</Text>
-                  <Text>End Time: {endTime}</Text>
-                  <Text>Duration: {item.duration} min</Text>
+                <View
+                  style={[
+                    styles.sessionItem,
+                    { borderBottomColor: DefaultModeColors.border },
+                  ]}
+                >
+                  <Text style={{ color: DefaultModeColors.text }}>
+                    {t("startDate", { startDate })}
+                  </Text>
+                  <Text style={{ color: DefaultModeColors.text }}>
+                    {t("startTime", { startTime })}
+                  </Text>
+                  <Text style={{ color: DefaultModeColors.text }}>
+                    {t("endDate", { endDate })}
+                  </Text>
+                  <Text style={{ color: DefaultModeColors.text }}>
+                    {t("endTime", { endTime })}
+                  </Text>
+                  <Text style={{ color: DefaultModeColors.text }}>
+                    {t("duration", { duration: item.duration })}
+                  </Text>
                 </View>
               );
             }}
           />
         </>
       ) : (
-        <Text style={styles.noDataText}>No data available, start a flow session for this task for statistics.</Text>
+        <Text style={[styles.noDataText, { color: DefaultModeColors.text }]}>
+          {t("noData")}
+        </Text>
       )}
     </View>
   );
 };
 
 export default TaskStatisticsScreen;
-

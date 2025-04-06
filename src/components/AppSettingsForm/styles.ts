@@ -5,6 +5,14 @@ const styles = StyleSheet.create({
     padding: 20,
     rowGap: 10,
   },
+  checkBoxContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  label: {
+    fontSize: 16,
+  },
 });
 
 export default styles;

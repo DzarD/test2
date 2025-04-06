@@ -1,99 +1,73 @@
 import { StatusBar } from "expo-status-bar";
-import * as SplashScreen from "expo-splash-screen";
 import {
   NavigationContainer,
   DefaultTheme,
   DarkTheme,
 } from "@react-navigation/native";
-import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { useEffect, useState } from "react";
-import { Text, Platform } from "react-native";
 import { initDatabase } from "./src/database/db";
 import { SessionSettingsProvider } from "./src/context/SessionSettingsContext";
-import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import { DefaultModeColors, DarkModeColors } from "./src/constants";
-import CustomTabBarButton from "./src/components/CustomTabBarButton";
+import MenuTabNavigator from "./src/navigation/MenuTabNavigator";
+import * as Notifications from "expo-notifications";
+import { NotificationSettingsProvider } from "./src/context/NotificationSettingsContext";
+import "./src/i18n";
+import { i18nInit } from "./src/i18n";
 
-// Import Screens and Navigations
-import SessionScreen from "./src/screens/SessionScreen";
-import TaskStackNavigator from "./src/navigation/TaskStackNavigator";
-import StatisticsScreen from "./src/screens/StatisticsScreen";
-import SettingsScreen from "./src/screens/SettingsScreen";
 
-// Prevent auto hide of the splash screen
-SplashScreen.preventAutoHideAsync();
+// Import SplashScreenComponent
+import SplashScreenComponent from "./src/components/SplashScreenComponent";
 
-const Tab = createBottomTabNavigator();
+//set notification handler to show notifications in -> foreground
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldPlaySound: false,
+    shouldSetBadge: false,
+  }),
+});
 
 export default function App() {
   const [loading, setLoading] = useState(true);
+  const [i18nReady, setI18nReady] = useState(false);
 
   useEffect(() => {
-    // Initialize database on app start
-    initDatabase();
-    setLoading(false);
-    // Hide splash screen
-    SplashScreen.hideAsync();
+    const initializeApp = async () => {
+      try {
+        // Initialize the database
+        initDatabase();
+        // Initialize the i18n
+        await i18nInit();
+        setI18nReady(true);
+      } catch (error) {
+        console.error("Error during initialization:", error);
+      }
+    };
+
+    initializeApp(); // Run initialization logic
+
+    const timeout = setTimeout(() => {
+      setLoading(false);
+    }, 2000);
+
+    return () => clearTimeout(timeout);
   }, []);
 
-  if (loading) {
-    return <Text>Loading...</Text>;
+  if (loading || !i18nReady) {
+    return <SplashScreenComponent />;
   }
 
   return (
-    <SessionSettingsProvider>
-      <NavigationContainer theme={defaultTheme}>
-        {/* dark for defaultTheme and light for darkTheme */}
-        <StatusBar style="dark" />
-        <Tab.Navigator
-          initialRouteName="Session"
-          screenOptions={({ route }) => ({
-            headerTitleAlign: "center",
-            headerStyle: { height: Platform.OS === "ios" ? 100 : 80 },
-            headerTitleStyle: { paddingBottom: Platform.OS === "ios" ? 5 : 0 },
-            tabBarButton: (props) => <CustomTabBarButton {...props} />,
-            tabBarIcon: ({ focused, color, size }) => {
-              let iconName: string;
-
-              if (route.name === "Session") {
-                iconName = focused
-                  ? "timer-settings"
-                  : "timer-settings-outline";
-              } else if (route.name === "TaskStack") {
-                iconName = focused
-                  ? "clipboard-list"
-                  : "clipboard-list-outline";
-              } else if (route.name === "Statistics") {
-                iconName = focused ? "chart-box" : "chart-box-outline";
-              } else if (route.name === "Settings") {
-                iconName = focused ? "cog" : "cog-outline";
-              } else {
-                iconName = focused ? "triangle" : "triangle-outline"; // Default icon
-              }
-
-              return (
-                <MaterialCommunityIcons
-                  name={iconName as any}
-                  size={size}
-                  color={color}
-                />
-              );
-            },
-            tabBarActiveTintColor: DefaultModeColors.accent,
-            tabBarInactiveTintColor: DefaultModeColors.text,
-          })}
-        >
-          <Tab.Screen name="Session" component={SessionScreen} />
-          <Tab.Screen
-            name="TaskStack"
-            component={TaskStackNavigator}
-            options={{ title: "Tasks", headerShown: false }}
-          />
-          <Tab.Screen name="Statistics" component={StatisticsScreen} />
-          <Tab.Screen name="Settings" component={SettingsScreen} />
-        </Tab.Navigator>
-      </NavigationContainer>
-    </SessionSettingsProvider>
+    // Wrap with NotificationSettingsProvider
+    <NotificationSettingsProvider>
+      <SessionSettingsProvider>
+        <NavigationContainer theme={defaultTheme}>
+          {/* dark for defaultTheme and light for darkTheme */}
+          <StatusBar style="dark" />
+          <MenuTabNavigator />
+        </NavigationContainer>
+      </SessionSettingsProvider>
+    </NotificationSettingsProvider>
   );
 }
 

@@ -8,6 +8,8 @@ import CustomButton from "../CustomButton";
 import DropDownPicker from "react-native-dropdown-picker";
 import { useTags } from "../../hooks/useTags";
 import { DefaultModeColors, DarkModeColors } from "../../constants";
+import { checkTaskExists } from "../../database/db";
+import { useTranslation } from "react-i18next";
 
 interface FlowSessionTimerProps {
   taskId: number | null;
@@ -31,6 +33,8 @@ const FlowSessionTimer: React.FC<FlowSessionTimerProps> = ({
   const [open, setOpen] = useState(false);
   const [tagId, setTagId] = useState<number | null>(null);
   const { tags, loadTags } = useTags();
+
+  const { t } = useTranslation();
 
   const {
     timeLeft,
@@ -68,6 +72,34 @@ const FlowSessionTimer: React.FC<FlowSessionTimerProps> = ({
     }, [])
   );
 
+  //Clear task after it is deleted from database
+  const checkTaskInDatabase = async (taskId: number | null) => {
+    if (!taskId) return false;
+
+    try {
+      const taskExists = await checkTaskExists(taskId);
+      return taskExists;
+    } catch (error) {
+      console.error("Error checking task in database:", error);
+      return false;
+    }
+  };
+
+  useFocusEffect(
+    React.useCallback(() => {
+      const checkAndClearTask = async () => {
+        if (taskId !== null) {
+          const taskExists = await checkTaskInDatabase(taskId);
+          if (!taskExists) {
+            handleClearTask();
+          }
+        }
+      };
+
+      checkAndClearTask();
+    }, [taskId])
+  );
+
   const handleTagSelection = (
     selectedValue: number | ((val: number | null) => number) | null
   ) => {
@@ -86,7 +118,7 @@ const FlowSessionTimer: React.FC<FlowSessionTimerProps> = ({
   };
 
   if (loading) {
-    return <Text>Loading...</Text>;
+    return <Text>{t("loading")}</Text>;
   }
 
   return (
@@ -103,7 +135,7 @@ const FlowSessionTimer: React.FC<FlowSessionTimerProps> = ({
             setOpen={setOpen}
             setValue={handleTagSelection}
             closeAfterSelecting={true}
-            placeholder="Select a tag"
+            placeholder={t("selectTag")}
             theme="LIGHT"
             style={{
               backgroundColor: DefaultModeColors.background,
@@ -162,7 +194,7 @@ const FlowSessionTimer: React.FC<FlowSessionTimerProps> = ({
         {!isActive && taskId != null && (
           <>
             <View style={styles.singleContainer}>
-              <CustomButton title="Clear Task" onPress={handleClearTask} />
+              <CustomButton title={t("clearTask")} onPress={handleClearTask} />
             </View>
           </>
         )}
@@ -170,7 +202,11 @@ const FlowSessionTimer: React.FC<FlowSessionTimerProps> = ({
 
       <View style={styles.timerContainer}>
         <Text style={[styles.sessionLabel, { color: DefaultModeColors.text }]}>
-          {sessionLabel}
+          {sessionLabel === "Focus"
+            ? t("focusLabel")
+            : sessionLabel === "Long Break"
+            ? t("longBreakLabel")
+            : t("breakLabel")}
         </Text>
         <Text style={[styles.time, { color: DefaultModeColors.accent }]}>
           {`${Math.floor(timeLeft / 60000)}:${Math.floor(
@@ -182,11 +218,11 @@ const FlowSessionTimer: React.FC<FlowSessionTimerProps> = ({
 
         <View style={styles.buttonContainer}>
           <CustomButton
-            title={isActive ? "Stop" : "Start"}
+            title={isActive ? t("stop") : t("start")}
             onPress={startStopTimer}
           />
           {isActive && currentSession % 2 === 0 && (
-            <CustomButton title="Skip Break" onPress={skipBreak} />
+            <CustomButton title={t("skipBreak")} onPress={skipBreak} />
           )}
         </View>
       </View>

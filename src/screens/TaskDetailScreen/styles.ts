@@ -1,5 +1,4 @@
 import { StyleSheet } from "react-native";
-import { DefaultModeColors } from "../../constants";
 
 const styles = StyleSheet.create({
   container: {
@@ -32,11 +31,12 @@ const styles = StyleSheet.create({
   },
   descriptionContainer: {
     flex: 1,
-    justifyContent: 'flex-start',
+    justifyContent: "flex-start",
   },
   description: {
     fontSize: 16,
     flexWrap: "wrap",
+    marginBottom: 10,
   },
   modalOverlay: {
     flex: 1,
@@ -63,7 +63,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     marginTop: 10,
-    columnGap:10,
+    columnGap: 10,
   },
   flexButton: {
     flex: 1,

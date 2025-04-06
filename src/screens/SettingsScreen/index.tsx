@@ -5,20 +5,28 @@ import SessionSettingsForm from "../../components/SessionSettingsForm";
 import TagSettingsForm from "../../components/TagSettingsForm";
 import { DefaultModeColors, DarkModeColors } from "../../constants";
 import DataSettingsForm from "../../components/DataSettingsForm";
+import AppSettingsForm from "../../components/AppSettingsForm";
+import { useTranslation } from "react-i18next";
 
 export default function SettingsScreen() {
+  const { t } = useTranslation();
+
   const sections = [
     {
-      title: "Session Settings",
-      data: [<SessionSettingsForm />],
+      title: t("appSettings"),
+      data: [<AppSettingsForm key="app" />],
     },
     {
-      title: "Tag Settings",
-      data: [<TagSettingsForm />],
+      title: t("dataSettings"),
+      data: [<DataSettingsForm key="data" />],
     },
     {
-      title: "Data Settings",
-      data: [<DataSettingsForm />],
+      title: t("sessionSettings"),
+      data: [<SessionSettingsForm key="session" />],
+    },
+    {
+      title: t("tagSettings"),
+      data: [<TagSettingsForm key="tags" />],
     },
   ];
 

@@ -7,6 +7,7 @@ import { DefaultModeColors } from "../../constants";
 import { Task } from "../../constants/types";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import DropDownPicker from "react-native-dropdown-picker";
+import { useTranslation } from "react-i18next";
 
 const TaskList = () => {
   const { tasks, loading, loadTasks } = useTasks();
@@ -14,6 +15,8 @@ const TaskList = () => {
   const [open, setOpen] = useState(false);
   const [selectedTags, setSelectedTags] = useState<number[]>([]);
   const [filteredTasks, setFilteredTasks] = useState<Task[]>(tasks);
+
+  const { t } = useTranslation();
 
   const navigation = useNavigation<any>();
 
@@ -44,7 +47,7 @@ const TaskList = () => {
 
   const ListEmpty = () => (
     <Text style={[styles.noTaskText, { color: DefaultModeColors.text }]}>
-      Start by adding a new task
+      {t("startAddingTask")}
     </Text>
   );
   const ListFooter = () => (
@@ -108,8 +111,15 @@ const TaskList = () => {
     filterTasksByTags(selectedTags);
   }, [selectedTags, tasks]);
 
+  // Reset selected tags when the tags list is empty
+  useEffect(() => {
+    if (tags.length === 0) {
+      setSelectedTags([]);
+    }
+  }, [tags]);
+
   if (loading) {
-    return <Text>Loading...</Text>;
+    return <Text>{t("loading")}</Text>;
   }
 
   return (
@@ -126,7 +136,7 @@ const TaskList = () => {
         max={tags.length}
         value={selectedTags}
         setValue={setSelectedTags}
-        placeholder="Filter by Tag"
+        placeholder={t("filterByTag")}
         mode="BADGE"
         showBadgeDot={false}
         theme="LIGHT"
@@ -156,7 +166,7 @@ const TaskList = () => {
         />
       ) : filteredTasks.length === 0 ? (
         <Text style={[styles.noTaskText, { color: DefaultModeColors.text }]}>
-          No tasks found for the selected tags.
+          {t("noTasksFound")}
         </Text>
       ) : (
         <FlatList

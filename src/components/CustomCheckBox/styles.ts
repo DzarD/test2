@@ -5,7 +5,6 @@ const styles = StyleSheet.create({
   checkboxContainer: {
     flexDirection: "row",
     alignItems: "center",
-    marginVertical: 10,
   },
   checkbox: {
     width: 24,
@@ -16,7 +15,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     borderColor: DefaultModeColors.border,
     color: DefaultModeColors.text,
-    marginRight: 10,
   },
   checkmark: {
     fontSize: 18,
@@ -24,6 +22,7 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
   },
   label: {
+    marginLeft: 10,
     color: DefaultModeColors.text,
   },
 });

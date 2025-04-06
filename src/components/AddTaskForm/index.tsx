@@ -8,6 +8,7 @@ import { useTasks } from "../../hooks/useTasks";
 import { useTags } from "../../hooks/useTags";
 import DropDownPicker from "react-native-dropdown-picker";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
+import { useTranslation } from "react-i18next";
 
 export default function AddTaskForm() {
   const [name, setName] = useState("");
@@ -19,13 +20,15 @@ export default function AddTaskForm() {
 
   const { addTask } = useTasks();
 
+  const { t } = useTranslation();
+
   const navigation = useNavigation();
 
   // Load tags when the screen comes into focus
   useFocusEffect(
     React.useCallback(() => {
       loadTags();
-    }, [])
+    }, [loadTags])
   );
 
   const handleTagSelection = (
@@ -43,7 +46,7 @@ export default function AddTaskForm() {
   const handleAddTask = () => {
     if (!name.trim()) {
       // Show validation error if task name is empty
-      Alert.alert("Validation Error", "Task name is required");
+      Alert.alert(t("validationError"), t("taskNameRequired"));
     } else {
       // Add task
       addTask(tagId, name, description);
@@ -54,23 +57,25 @@ export default function AddTaskForm() {
 
   return (
     <View style={styles.container}>
-      <Text style={{ color: DefaultModeColors.text }}>Task Name:</Text>
+      <Text style={{ color: DefaultModeColors.text }}>{t("taskName")}:</Text>
       <CustomTextInput
-        placeholder="Enter task name"
+        placeholder={t("enterTaskName")}
         value={name}
         onChangeText={setName}
       />
 
-      <Text style={{ color: DefaultModeColors.text }}>Task Description:</Text>
+      <Text style={{ color: DefaultModeColors.text }}>
+        {t("taskDescription")}:
+      </Text>
       <CustomTextInput
         style={styles.descriptionInput}
-        placeholder="Enter task description"
+        placeholder={t("enterTaskDescription")}
         value={description}
         onChangeText={setDescription}
         multiline={true}
       />
 
-      <Text style={{ color: DefaultModeColors.text }}>Task Tag:</Text>
+      <Text style={{ color: DefaultModeColors.text }}>{t("taskTag")}:</Text>
       <DropDownPicker
         open={open}
         value={tagId}
@@ -81,7 +86,7 @@ export default function AddTaskForm() {
         setOpen={setOpen}
         setValue={handleTagSelection}
         closeAfterSelecting={true}
-        placeholder="Select a tag"
+        placeholder={t("selectTag")}
         //"DARK" or "LIGHT"
         theme="LIGHT"
         style={{
@@ -100,7 +105,7 @@ export default function AddTaskForm() {
         }}
       />
 
-      <CustomButton title="Add Task" onPress={handleAddTask} />
+      <CustomButton title={t("addTask")} onPress={handleAddTask} />
     </View>
   );
 }

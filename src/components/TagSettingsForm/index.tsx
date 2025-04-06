@@ -1,14 +1,17 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { View, Text, FlatList } from "react-native";
 import styles from "./styles";
 import { useTags } from "../../hooks/useTags";
 import CustomButton from "../CustomButton";
 import { DefaultModeColors, DarkModeColors } from "../../constants";
 import CustomTextInput from "../CustomTextInput";
+import { useTranslation } from "react-i18next";
 
 const TagSettingsForm = () => {
   const [tagInput, setTagInput] = useState("");
   const { tags, addTag, loadTags } = useTags();
+
+  const { t } = useTranslation();
 
   // Function to handle adding a new tag to tag table
   const handleAddTag = async () => {
@@ -27,21 +30,25 @@ const TagSettingsForm = () => {
 
   const ListEmpty = () => (
     <Text style={[styles.noTagsText, { color: DefaultModeColors.text }]}>
-      Start by adding a new tag
+      {t("startAddingTag")}
     </Text>
   );
 
+  useEffect(() => {
+    loadTags();
+  }, [loadTags]);
+
   return (
     <View style={styles.container}>
-      <Text style={{ color: DefaultModeColors.text }}>New Tag:</Text>
+      <Text style={{ color: DefaultModeColors.text }}>{t("newTag")}:</Text>
       <CustomTextInput
         value={tagInput}
         onChangeText={setTagInput}
-        placeholder="Enter new tag name"
+        placeholder={t("enterTagName")}
       />
-      <CustomButton title="Add Tag" onPress={handleAddTag} />
+      <CustomButton title={t("addTag")} onPress={handleAddTag} />
       <Text style={[styles.tagListText, { color: DefaultModeColors.text }]}>
-        Tag List:
+      {t("tagList")}:
       </Text>
       <FlatList
         data={tags}

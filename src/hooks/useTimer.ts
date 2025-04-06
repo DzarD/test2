@@ -1,10 +1,24 @@
 import { useState, useEffect, useRef } from "react";
-import { insertSession, insertFlowSession, updateFlowSession, getLastFlowSessionId } from "../database/db";
+import {
+  insertSession,
+  insertFlowSession,
+  updateFlowSession,
+  getLastFlowSessionId,
+} from "../database/db";
 import { SessionSettings } from "../constants/types";
+import * as Notifications from "expo-notifications";
+import { useNotificationSettings } from "../context/NotificationSettingsContext";
+import { useTranslation } from "react-i18next";
 
-export const useTimer = (initialSettings: SessionSettings, initialSession: number, initialFlowSessionId: number, initialTagId: number | null, taskId: number | null) => {
+export const useTimer = (
+  initialSettings: SessionSettings,
+  initialSession: number,
+  initialFlowSessionId: number,
+  initialTagId: number | null,
+  taskId: number | null
+) => {
   const [settings, setSettings] = useState(initialSettings);
-  const [timeLeft, setTimeLeft] = useState(settings.focus_time *  60 * 1000);
+  const [timeLeft, setTimeLeft] = useState(settings.focus_time * 60 * 1000);
   const [isActive, setIsActive] = useState(false);
   const [currentSession, setCurrentSession] = useState(initialSession);
   const [flowSessionId, setFlowSessionId] = useState(initialFlowSessionId);
@@ -14,11 +28,18 @@ export const useTimer = (initialSettings: SessionSettings, initialSession: numbe
   const [totalFocusTime, setTotalFocusTime] = useState(0);
   const [totalBreakTime, setTotalBreakTime] = useState(0);
 
+  const { t } = useTranslation();
+
+  // whether notifications are enabled
+  const { notificationsEnabled } = useNotificationSettings();
+
   // Calculate session label based on the current session
-  const sessionLabel = 
+  const sessionLabel =
     currentSession % 2 === 1
       ? "Focus"
-      : (settings.sections * 2 === currentSession ? "Long Break" : "Break");
+      : settings.sections * 2 === currentSession
+      ? "Long Break"
+      : "Break";
 
   // Start the timer and update timeLeft
   const startNewTimer = (newStartTime: number) => {
@@ -48,54 +69,66 @@ export const useTimer = (initialSettings: SessionSettings, initialSession: numbe
       setSettings(initialSettings); //If settings have changed while the timer is active
 
       // Update flow session after stopping
-      updateFlowSession(flowSessionId, totalFocusTime, totalBreakTime, new Date().toISOString()).then(() => {
+      updateFlowSession(
+        flowSessionId,
+        totalFocusTime,
+        totalBreakTime,
+        new Date().toISOString()
+      ).then(() => {
         // After updating the flow session, increment flow_session_id
         setFlowSessionId((prevFlowSessionId) => prevFlowSessionId + 1);
       });
 
       // Reset to the first session (Focus) after stopping
-      setCurrentSession(1);  // Reset to Focus session
-      setTimeLeft(settings.focus_time *  60 * 1000);  // Reset the timer to focus duration
+      setCurrentSession(1); // Reset to Focus session
+      setTimeLeft(settings.focus_time * 60 * 1000); // Reset the timer to focus duration
     } else {
       const newStartTime = Date.now();
-      setSessionStartTime(newStartTime);  // Set the actual session start time for the first session
-      startNewTimer(newStartTime);  // Start the timer for the current session
+      setSessionStartTime(newStartTime); // Set the actual session start time for the first session
+      startNewTimer(newStartTime); // Start the timer for the current session
       setIsActive(true);
 
       // Insert flow session when the timer starts, passing the taskId
-      insertFlowSession(new Date().toISOString(), tagId, taskId).then((newFlowSessionId) => {
-        setFlowSessionId(newFlowSessionId); // Set new flow session ID
-      });
+      insertFlowSession(new Date().toISOString(), tagId, taskId).then(
+        (newFlowSessionId) => {
+          setFlowSessionId(newFlowSessionId); // Set new flow session ID
+        }
+      );
     }
   };
 
   // Handle session transition (Focus <-> Break)
-  const handleSessionTransition = (startTime: number , isSkippingBreak = false) => {
+  const handleSessionTransition = (
+    startTime: number,
+    isSkippingBreak = false
+  ) => {
     let nextSession = currentSession;
-    let nextDuration = settings.focus_time *  60 * 1000; // Default to focus session duration
+    let nextDuration = settings.focus_time * 60 * 1000; // Default to focus session duration
     let sessionType = "Focus";
 
     if (currentSession % 2 === 1) {
       // Focus session -> Break session
       nextSession = currentSession + 1;
       // Set break duration
-      nextDuration = (currentSession % 4 === 1) ? settings.short_break * 60 * 1000 : settings.long_break * 60 * 1000;
+      nextDuration =
+        currentSession % 4 === 1
+          ? settings.short_break * 60 * 1000
+          : settings.long_break * 60 * 1000;
       sessionType = "Break";
 
       if (nextSession % (settings.sections * 2) === 0) {
         nextDuration = settings.long_break * 60 * 1000;
       }
-    
     } else {
       // Break session -> Focus session
       nextSession = currentSession + 1;
-      nextDuration = settings.focus_time *  60 * 1000;
+      nextDuration = settings.focus_time * 60 * 1000;
       sessionType = "Focus";
     }
 
     setCurrentSession(nextSession);
-    setTimeLeft(nextDuration);  // Set the next session's time duration
-    setSessionStartTime(Date.now());  // Update session start time for the next session
+    setTimeLeft(nextDuration); // Set the next session's time duration
+    setSessionStartTime(Date.now()); // Update session start time for the next session
 
     // Update the total time based on session type
     if (sessionType === "Focus") {
@@ -104,17 +137,38 @@ export const useTimer = (initialSettings: SessionSettings, initialSession: numbe
       setTotalBreakTime((prevTime) => prevTime + nextDuration);
     }
 
-    saveSession(startTime, sessionType);  // Save the session when it ends
+    saveSession(startTime, sessionType); // Save the session when it ends
+
+    // if notifications are enabled
+    if (notificationsEnabled) {
+      const title =
+        sessionType === "Focus" ? t("timeToFocus") : t("timeToRelax");
+      const body =
+        sessionType === "Focus"
+          ? t("focusSessionStarting")
+          : t("breakSessionStarting");
+      Notifications.scheduleNotificationAsync({
+        content: { title, body },
+        trigger: null, // Trigger immediately
+      });
+    }
   };
 
   // Save session data to the database
   const saveSession = (startTime: number, type: string) => {
     const endTime = Date.now();
     const duration = Math.floor((endTime - startTime) / 1000);
-    console.log(`Saving session: ${currentSession}, Duration: ${duration} seconds`);
+    console.log(
+      `Saving session: ${currentSession}, Duration: ${duration} seconds`
+    );
 
     // Save session to the database
-    insertSession(flowSessionId, new Date(startTime).toISOString(), new Date(endTime).toISOString(), currentSession)
+    insertSession(
+      flowSessionId,
+      new Date(startTime).toISOString(),
+      new Date(endTime).toISOString(),
+      currentSession
+    )
       .then(() => {
         console.log("Session saved successfully.");
       })
@@ -137,7 +191,7 @@ export const useTimer = (initialSettings: SessionSettings, initialSession: numbe
   useEffect(() => {
     if (!isActive) {
       setSettings(initialSettings);
-      setTimeLeft(initialSettings.focus_time *  60 * 1000);  // Reset time if settings change
+      setTimeLeft(initialSettings.focus_time * 60 * 1000); // Reset time if settings change
     }
   }, [initialSettings, isActive]);
 
@@ -149,7 +203,7 @@ export const useTimer = (initialSettings: SessionSettings, initialSession: numbe
   // Update session duration when session changes
   useEffect(() => {
     if (currentSession % 2 === 1) {
-      setTimeLeft(settings.focus_time *  60 * 1000);
+      setTimeLeft(settings.focus_time * 60 * 1000);
     } else if (currentSession % (settings.sections * 2) === 0) {
       setTimeLeft(settings.long_break * 60 * 1000);
     } else {
@@ -157,18 +211,18 @@ export const useTimer = (initialSettings: SessionSettings, initialSession: numbe
     }
 
     if (isActive) {
-      startNewTimer(Date.now());  // Restart the timer when the session changes
+      startNewTimer(Date.now()); // Restart the timer when the session changes
     }
 
     return () => {
       if (timerRef.current) {
-        clearInterval(timerRef.current);  // Clean up timer when component unmounts
+        clearInterval(timerRef.current); // Clean up timer when component unmounts
       }
     };
   }, [currentSession, isActive]);
 
   const skipBreak = () => {
-    // only if we're active and on a break 
+    // only if we're active and on a break
     if (!isActive || currentSession % 2 === 1 || !sessionStartTime) {
       console.log("No break to skip or timer not active.");
       return;
@@ -180,5 +234,12 @@ export const useTimer = (initialSettings: SessionSettings, initialSession: numbe
     console.log("Skipped break. Now starting a new focus session.");
   };
 
-  return { timeLeft, isActive, startStopTimer, currentSession, sessionLabel, skipBreak };
+  return {
+    timeLeft,
+    isActive,
+    startStopTimer,
+    currentSession,
+    sessionLabel,
+    skipBreak,
+  };
 };

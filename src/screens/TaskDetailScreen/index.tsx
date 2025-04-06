@@ -16,6 +16,7 @@ import CustomTextInput from "../../components/CustomTextInput";
 import DropDownPicker from "react-native-dropdown-picker";
 import { DefaultModeColors, DarkModeColors } from "../../constants";
 import CustomCheckBox from "../../components/CustomCheckBox";
+import { useTranslation } from "react-i18next";
 
 type TaskDetailRouteProp = RouteProp<
   { TaskDetail: { task: Task } },
@@ -35,6 +36,8 @@ const TaskDetailScreen = () => {
   const [open, setOpen] = useState(false);
   const [showUpdateModal, setShowUpdateModal] = useState(false);
   const [isTaskCompleted, setIsTaskCompleted] = useState(task.isTaskCompleted);
+
+  const { t } = useTranslation();
 
   const handleSessionScreen = () => {
     const taskId = task.id ?? 0;
@@ -88,15 +91,18 @@ const TaskDetailScreen = () => {
   //Handles the deletion of a task
   const handleDeleteTask = () => {
     Alert.alert(
-      "Confirm Deletion",
-      `Are you sure you want to delete task "${editName}"?`,
+      t("confirmDeletion"),
+      t("deleteTaskConfirmation", { taskName: editName }),
       [
-        { text: "Cancel", style: "cancel" },
+        { text: t("cancel"), style: "cancel" },
         {
-          text: "OK",
+          text: t("ok"),
           onPress: () => {
             deleteTask(task.id);
-            Alert.alert("Task Deleted", `Task "${editName}" has been deleted`);
+            Alert.alert(
+              t("taskDeleted"),
+              t("taskDeletedMessage", { taskName: editName })
+            );
             navigation.goBack();
           },
         },
@@ -109,6 +115,7 @@ const TaskDetailScreen = () => {
     setEditName(task.name);
     setEditDescription(task.description);
     setEditTagId(task.tag_id);
+    setIsTaskCompleted(task.isTaskCompleted);
     setShowUpdateModal(true);
   };
 
@@ -116,15 +123,24 @@ const TaskDetailScreen = () => {
   const confirmUpdate = () => {
     if (!editName.trim()) {
       // Show validation error if task name is empty
-      Alert.alert("Validation Error", "Task name is required");
+      Alert.alert(t("validationError"), t("taskNameRequired"));
     } else {
       if (editTagId !== task.tag_id) {
         updateTags(task.id, editTagId);
       }
 
-      updateTask(task.id, editTagId, editName, editDescription, isTaskCompleted);
-      
-      Alert.alert("Task Updated", `Task "${editName}" has been updated`);
+      updateTask(
+        task.id,
+        editTagId,
+        editName,
+        editDescription,
+        isTaskCompleted
+      );
+
+      Alert.alert(
+        t("taskUpdated"),
+        t("taskUpdatedMessage", { taskName: editName })
+      );
       setShowUpdateModal(false);
       navigation.goBack();
     }
@@ -164,17 +180,27 @@ const TaskDetailScreen = () => {
       />
 
       <View style={styles.descriptionContainer}>
-        <Text style={styles.description}>{task.description}</Text>
-        <CustomButton title="View Task Statistics" onPress={() => navigation.navigate("Task Statistics", { taskId: task.id })}/>
+        <Text style={[styles.description, { color: DefaultModeColors.text }]}>
+          {task.description}
+        </Text>
+        <CustomButton
+          title={t("viewTaskStatistics")}
+          onPress={() =>
+            navigation.navigate("TaskStatistics", { taskId: task.id })
+          }
+        />
       </View>
 
-      <CustomButton title="Start flow session" onPress={handleSessionScreen} />
+      <CustomButton
+        title={t("startFlowSession")}
+        onPress={handleSessionScreen}
+      />
       <View style={styles.buttonRow}>
         <View style={styles.flexButton}>
-          <CustomButton title="Update Task" onPress={handleUpdateTask} />
+          <CustomButton title={t("updateTask")} onPress={handleUpdateTask} />
         </View>
         <View style={styles.flexButton}>
-          <CustomButton title="Delete Task" onPress={handleDeleteTask} />
+          <CustomButton title={t("deleteTask")} onPress={handleDeleteTask} />
         </View>
       </View>
 
@@ -194,29 +220,33 @@ const TaskDetailScreen = () => {
               <Text
                 style={[styles.modalTitle, { color: DefaultModeColors.text }]}
               >
-                Update Task
+                {t("updateTask")}
               </Text>
 
-              <Text style={{ color: DefaultModeColors.text }}>Task Name:</Text>
+              <Text style={{ color: DefaultModeColors.text }}>
+                {t("taskName")}:
+              </Text>
               <CustomTextInput
-                placeholder="Enter task name"
+                placeholder={t("enterTaskName")}
                 value={editName}
                 onChangeText={setEditName}
               />
 
               <Text style={{ color: DefaultModeColors.text }}>
-                Task Description:
+                {t("taskDescription")}:
               </Text>
 
               <CustomTextInput
                 style={styles.descriptionInput}
-                placeholder="Enter task description"
+                placeholder={t("enterTaskDescription")}
                 value={editDescription}
                 onChangeText={setEditDescription}
                 multiline={true}
               />
 
-              <Text style={{ color: DefaultModeColors.text }}>Select Tag:</Text>
+              <Text style={{ color: DefaultModeColors.text }}>
+                {t("taskTag")}:
+              </Text>
               <DropDownPicker
                 open={open}
                 value={editTagId}
@@ -226,7 +256,7 @@ const TaskDetailScreen = () => {
                 }))}
                 setOpen={setOpen}
                 setValue={handleTagSelection}
-                placeholder="Select a tag"
+                placeholder={t("selectTag")}
                 //"DARK" or "LIGHT"
                 style={{
                   backgroundColor: DefaultModeColors.background,
@@ -245,17 +275,17 @@ const TaskDetailScreen = () => {
               />
 
               <CustomCheckBox
-                label="Task Completed"
+                label={t("taskCompleted")}
                 checked={isTaskCompleted}
                 onToggle={handleTaskCompletionToggle}
               />
 
               <View style={styles.buttonRow}>
                 <CustomButton
-                  title="Cancel"
+                  title={t("cancel")}
                   onPress={() => setShowUpdateModal(false)}
                 />
-                <CustomButton title="Confirm" onPress={confirmUpdate} />
+                <CustomButton title={t("confirm")} onPress={confirmUpdate} />
               </View>
             </View>
           </View>
